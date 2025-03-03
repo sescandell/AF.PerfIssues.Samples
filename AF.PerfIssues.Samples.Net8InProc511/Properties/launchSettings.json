@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "AF.PerfIssues.Samples.Net8InProc511": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7090",
+      "launchBrowser": false
+    }
+  }
+}

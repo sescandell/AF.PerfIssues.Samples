@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "AF.PerfIssues.Samples.Net8Isolated511": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7081",
+      "launchBrowser": false
+    }
+  }
+}
