@@ -13,12 +13,23 @@ public class Function1
         _logger = logger;
     }
 
-    [Function(nameof(Function1))]
+    [Function(nameof(Run))]
     public async Task Run(
         [ServiceBusTrigger("queue-net8isolated511", Connection = "SBConnectionString")]
         ServiceBusReceivedMessage message)
     {
-        _logger.LogInformation("C# ServiceBus queue trigger function {netVersion} {mode} {sbLibVersion}", "net8", "isolated", "511");
+        _logger.LogInformation("C# ServiceBus queue trigger function {netVersion} {mode} {sbLibVersion} {region}", "net8", "isolated", "511", "we");
+
+        // Completing the message is not available with this version. It's automatically done by the host
+        await Task.Delay(TimeSpan.FromMilliseconds(100));
+    }
+
+    [Function(nameof(RunFallback))]
+    public async Task RunFallback(
+        [ServiceBusTrigger("queue-net8isolated511", Connection = "SBConnectionStringFallback")]
+        ServiceBusReceivedMessage message)
+    {
+        _logger.LogInformation("C# ServiceBus queue trigger function {netVersion} {mode} {sbLibVersion} {region}", "net8", "isolated", "511", "ne");
 
         // Completing the message is not available with this version. It's automatically done by the host
         await Task.Delay(TimeSpan.FromMilliseconds(100));

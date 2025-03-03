@@ -13,14 +13,26 @@ public class Function1
         _logger = logger;
     }
 
-    [Function(nameof(Function1))]
+    [Function(nameof(Run))]
     public async Task Run(
         [ServiceBusTrigger("queue-net8isolated516", Connection = "SBConnectionString")]
         ServiceBusReceivedMessage message,
         ServiceBusMessageActions messageActions)
     {
-        _logger.LogInformation("C# ServiceBus queue trigger function {netVersion} {mode} {sbLibVersion}", "net8", "isolated", "516");
+        _logger.LogInformation("C# ServiceBus queue trigger function {netVersion} {mode} {sbLibVersion} {region}", "net8", "isolated", "516", "we");
         
+        await Task.Delay(TimeSpan.FromMilliseconds(100));
+        await messageActions.CompleteMessageAsync(message);
+    }
+
+    [Function(nameof(RunFallback))]
+    public async Task RunFallback(
+        [ServiceBusTrigger("queue-net8isolated516", Connection = "SBConnectionStringFallback")]
+        ServiceBusReceivedMessage message,
+        ServiceBusMessageActions messageActions)
+    {
+        _logger.LogInformation("C# ServiceBus queue trigger function {netVersion} {mode} {sbLibVersion} {region}", "net8", "isolated", "516", "ne");
+
         await Task.Delay(TimeSpan.FromMilliseconds(100));
         await messageActions.CompleteMessageAsync(message);
     }
