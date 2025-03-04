@@ -1,28 +1,14 @@
 pool: Build
 name: Production - 8P511 AF
 trigger: none
-resources:
-  pipelines:
-  - pipeline: triggerdeploy
-    source: Production - Trigger Deploy
-    trigger:
-      stages:
-      - 8P511AF
 
-parameters:
- - name: 'checkoutClean'
-   displayName: 'Clean directory before build ?'
-   type: boolean
-   default: false
- - name: 'azureSubscription'
-   displayName: 'Azure Subscription'
-   type: string
+variables:
+  - group: "WebDeploy PRODUCTION"  
 
 stages:
   - template: ../template.yml
     parameters:
-      azureSubscription: ${{ parameters.azureSubscription }}
-      checkoutClean: ${{ parameters.checkoutClean }}
+      azureSubscription: $(subscription)
       afs: 
         - afName: socpro-support-8p511-we-af
           afDisplayName: 8P511 WE
