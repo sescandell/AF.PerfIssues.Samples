@@ -1,0 +1,117 @@
+parameters:
+  - name: azureSubscription
+  - name: afs
+    type: object
+    default: []
+  - name: afsNE
+    type: object
+    default: []
+  - name: projectName
+  - name: checkoutClean
+    type: boolean
+    default: false
+
+stages:
+  - stage: checkoutAndBuild
+    displayName: Checkout and build
+    jobs:    
+      - job: checkoutAndBuild
+        pool: build
+        steps:
+          - checkout: self
+            submodules: false
+            fetchTags: false
+            fetchDepth: 0
+            clean: ${{ parameters.checkoutClean }}         
+          
+          - task: DotNetCoreCLI@2
+            displayName: Restore ${{ parameters.projectName }}
+            retryCountOnTaskFailure: 3
+            inputs:
+              command: 'restore'
+              projects: '${{ parameters.projectName }}/${{ parameters.projectName }}.csproj'
+              feedsToUse: 'select'
+              vstsFeed: 'b67ea453-7196-4d13-91cf-d20aedb54bf3'
+          - task: DotNetCoreCLI@2
+            displayName: Build ${{ parameters.projectName }}
+            retryCountOnTaskFailure: 3
+            inputs:
+              command: 'publish'
+              projects: '${{ parameters.projectName }}/${{ parameters.projectName }}.csproj'
+              arguments: '-c Release --output $(build.artifactstagingdirectory) --no-restore'
+              publishWebProjects: false
+              modifyOutputPath: true
+              zipAfterPublish: true
+          - publish: $(build.artifactstagingdirectory)
+            artifact: drop
+            displayName: 'Publish Artifact: drop'
+  - stage: deployWE
+    displayName: deploy WE
+    jobs:        
+      - ${{ each af in parameters.afs }}:
+        - job: deploy_${{ replace(af.afName, '-', '_') }}
+          pool: deploy          
+          steps:  
+            - checkout: none
+            - download: current
+              artifact: drop
+            - task: AzureAppServiceManage@0
+              displayName: Stop ${{ af.afDisplayName }} AF
+              retryCountOnTaskFailure: 3
+              inputs:
+                azureSubscription: ${{ parameters.azureSubscription }}
+                Action: Stop Azure App Service
+                WebAppName: ${{ af.afName }}
+            - task: AzureFunctionApp@2
+              displayName: Deploy ${{ af.afDisplayName }} AF
+              retryCountOnTaskFailure: 3
+              inputs:
+                azureSubscription: ${{ parameters.azureSubscription }}
+                appType: 'functionApp'
+                appName: ${{ af.afName }}
+                package: '$(Pipeline.Workspace)/drop/${{ parameters.projectName }}.zip'
+                deploymentMethod: 'runFromPackage'
+            - task: AzureAppServiceManage@0
+              displayName: Start ${{ af.afName }} AF
+              retryCountOnTaskFailure: 3
+              inputs:
+                azureSubscription: ${{ parameters.azureSubscription }}
+                Action: Start Azure App Service
+                WebAppName: ${{ af.afName }} 
+
+  - stage: deployNE
+    dependsOn: deployWE
+    displayName: deploy NE
+    jobs:        
+    - ${{ each af in parameters.afsNE }}:
+      - job: deploy_${{ replace(af.afName, '-', '_') }}
+        pool: deploy          
+        steps:  
+          - checkout: none
+          - download: current
+            artifact: drop
+          - task: AzureAppServiceManage@0
+            displayName: Stop ${{ af.afDisplayName }} AF
+            retryCountOnTaskFailure: 3
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              Action: Stop Azure App Service
+              WebAppName: ${{ af.afName }}
+          - task: AzureFunctionApp@2
+            displayName: Deploy ${{ af.afDisplayName }} AF
+            retryCountOnTaskFailure: 3
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              appType: 'functionApp'
+              appName: ${{ af.afName }}
+              package: '$(Pipeline.Workspace)/drop/${{ parameters.projectName }}.zip'
+              deploymentMethod: 'runFromPackage'
+          - task: AzureAppServiceManage@0
+            displayName: Start ${{ af.afName }} AF
+            retryCountOnTaskFailure: 3
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              Action: Start Azure App Service
+              WebAppName: ${{ af.afName }}    
+        
+        

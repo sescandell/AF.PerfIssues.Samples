@@ -1,0 +1,34 @@
+pool: Build
+name: Production - 9I512 AF
+trigger: none
+resources:
+  pipelines:
+  - pipeline: triggerdeploy
+    source: Production - Trigger Deploy
+    trigger:
+      stages:
+      - 9I512AF  
+
+parameters:
+ - name: 'checkoutClean'
+   displayName: 'Clean directory before build ?'
+   type: boolean
+   default: false
+ - name: 'azureSubscription'
+   displayName: 'Azure Subscription'
+   type: string
+
+stages:
+  - template: ../template.yml
+    parameters:
+      azureSubscription: ${{ parameters.azureSubscription }}
+      checkoutClean: ${{ parameters.checkoutClean }}
+      afs: 
+        - afName: socpro-support-9i512-we-af
+          afDisplayName: 9I512 WE
+     
+      afsNE:
+        - afName: socpro-support-9i512-ne-af
+          afDisplayName: 9I512 NE
+
+      projectName: AF.PerfIssues.Samples.Net9Isolated512
