@@ -6,7 +6,7 @@ variables:
   - group: "WebDeploy PRODUCTION"  
 
 stages:
-  - template: ../template.yml
+  - template: ./template.yml
     parameters:
       azureSubscription: $(subscription)
       afs: 
